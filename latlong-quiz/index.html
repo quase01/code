@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>가위를 든 신세경! 위도와 경도 탐험대</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          jua: ["Jua", "sans-serif"],
+          sans: ["Noto Sans KR", "sans-serif"]
+        },
+        colors: {
+          lat: { DEFAULT: "#e0393e", soft: "#fde2e2" },
+          lon: { DEFAULT: "#2f6fd6", soft: "#dce8fb" }
+        }
+      }
+    }
+  };
+</script>
+<style>
+  body { font-family: "Noto Sans KR", sans-serif; }
+  .font-jua { font-family: "Jua", sans-serif; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .nav-btn.active { background: #fff; color: #1e3a8a; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+  .city-btn.active { outline: 3px solid #f59e0b; outline-offset: 2px; }
+  .opt-btn.correct { background: #22c55e !important; color: #fff !important; border-color: #16a34a !important; }
+  .opt-btn.wrong { background: #ef4444 !important; color: #fff !important; border-color: #dc2626 !important; }
+  #mapCanvas { touch-action: none; cursor: crosshair; }
+  @keyframes pop { 0% { transform: scale(0.7); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  .pop-in { animation: pop 0.35s cubic-bezier(0.2,0.9,0.25,1.2); }
+</style>
+</head>
+<body class="bg-sky-50 text-slate-800">
+
+<div id="app" class="max-w-5xl mx-auto min-h-screen flex flex-col">
+
+  <!-- HEADER -->
+  <header class="sticky top-0 z-20 bg-blue-900 text-white shadow-md">
+    <div class="flex items-center justify-between px-4 py-3 gap-3 flex-wrap">
+      <div class="flex items-center gap-2 cursor-pointer" onclick="app.showScreen('home')">
+        <span class="text-3xl">🌏</span>
+        <div class="leading-tight">
+          <h1 class="font-jua text-xl">위도경도 탐험대</h1>
+          <p class="text-[11px] text-blue-200">6학년 사회 · 지구본과 세계지도</p>
+        </div>
+      </div>
+      <nav class="flex gap-1 bg-blue-800/60 rounded-full p-1 text-sm font-bold flex-wrap">
+        <button class="nav-btn active px-3 py-1.5 rounded-full transition" data-target="home" onclick="app.showScreen('home')">🏠 홈</button>
+        <button class="nav-btn px-3 py-1.5 rounded-full transition" data-target="mnemonic" onclick="app.showScreen('mnemonic')">✂️ 암기비법</button>
+        <button class="nav-btn px-3 py-1.5 rounded-full transition" data-target="map" onclick="app.showScreen('map')">🗺️ 지도 탐험</button>
+        <button class="nav-btn px-3 py-1.5 rounded-full transition" data-target="quiz" onclick="app.startQuiz()">🎯 퀴즈</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="flex-1 px-4 py-6">
+
+    <!-- HOME -->
+    <section id="screen-home" class="screen active space-y-6">
+      <div class="bg-gradient-to-br from-blue-600 to-indigo-700 text-white rounded-3xl p-6 md:p-10 shadow-lg">
+        <p class="inline-block bg-white/20 text-xs font-bold px-3 py-1 rounded-full mb-3">초등 6학년 사회 · 지구본과 세계지도</p>
+        <h2 class="font-jua text-3xl md:text-4xl mb-3 leading-snug">위도와 경도,<br><span class="text-yellow-300">"가위를 든 신세경!"</span>으로 끝내자</h2>
+        <p class="text-blue-100 mb-5">암기 비법을 익히고, 지도를 눌러보고, 퀴즈까지 풀면서 위도와 경도를 완전 정복해요!</p>
+        <div class="flex flex-wrap gap-3">
+          <button class="bg-yellow-400 hover:bg-yellow-300 text-blue-900 font-bold px-5 py-3 rounded-full shadow" onclick="app.showScreen('mnemonic')">✂️ 암기비법 보러가기</button>
+          <button class="bg-white/15 hover:bg-white/25 font-bold px-5 py-3 rounded-full" onclick="app.startQuiz()">🎯 바로 퀴즈 풀기</button>
+        </div>
+      </div>
+
+      <div class="grid sm:grid-cols-3 gap-4">
+        <div class="bg-white rounded-2xl p-5 shadow cursor-pointer hover:-translate-y-1 transition" onclick="app.showScreen('mnemonic')">
+          <div class="text-4xl mb-2">✂️👩</div>
+          <h3 class="font-jua text-lg mb-1">암기비법 코너</h3>
+          <p class="text-sm text-slate-500">가위(가로=위도), 세경(세로=경도) 카드로 한번에 외우기</p>
+        </div>
+        <div class="bg-white rounded-2xl p-5 shadow cursor-pointer hover:-translate-y-1 transition" onclick="app.showScreen('map')">
+          <div class="text-4xl mb-2">🗺️</div>
+          <h3 class="font-jua text-lg mb-1">지도 탐험 코너</h3>
+          <p class="text-sm text-slate-500">서울, 런던, 시드니, 뉴욕을 눌러 위도·경도 확인하기</p>
+        </div>
+        <div class="bg-white rounded-2xl p-5 shadow cursor-pointer hover:-translate-y-1 transition" onclick="app.startQuiz()">
+          <div class="text-4xl mb-2">🏅</div>
+          <h3 class="font-jua text-lg mb-1">퀴즈 도전 코너</h3>
+          <p class="text-sm text-slate-500">5문제 풀고 훈장을 받아보세요</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- MNEMONIC -->
+    <section id="screen-mnemonic" class="screen space-y-6">
+      <div class="text-center">
+        <h2 class="font-jua text-2xl md:text-3xl text-blue-900">암기 비법 코너</h2>
+        <p class="text-slate-500 mt-1">그림으로 딱 외우는 위도 · 경도!</p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-5">
+        <div class="bg-lat-soft border-2 border-lat rounded-3xl p-6 text-center shadow">
+          <div class="text-6xl mb-2">✂️</div>
+          <h3 class="font-jua text-2xl text-lat mb-1">가위</h3>
+          <p class="font-bold text-lat mb-2">가로선 = 위도</p>
+          <p class="text-sm text-slate-600">가위처럼 <b>가로</b>로 벌어지며 지구를 감싸는 선이 <b>위도</b>예요. 적도(0°)를 기준으로 북쪽은 <b>북위</b>, 남쪽은 <b>남위</b>라고 불러요.</p>
+        </div>
+        <div class="bg-lon-soft border-2 border-lon rounded-3xl p-6 text-center shadow">
+          <div class="text-6xl mb-2">👩</div>
+          <h3 class="font-jua text-2xl text-lon mb-1">세경</h3>
+          <p class="font-bold text-lon mb-2">세로선 = 경도</p>
+          <p class="text-sm text-slate-600">배우 <b>신세경</b>의 '세'로 <b>세로</b>선을 기억해요! 북극과 남극을 잇는 <b>세로선</b>이 <b>경도</b>예요. 본초 자오선(0°) 기준 동쪽은 <b>동경</b>, 서쪽은 <b>서경</b>이에요.</p>
+        </div>
+      </div>
+
+      <div class="bg-gradient-to-r from-lat to-lon text-white rounded-3xl p-6 md:p-8 text-center shadow-lg pop-in">
+        <p class="text-sm font-bold text-white/80 mb-2">최종 필살기 암기 공식</p>
+        <p class="font-jua text-3xl md:text-4xl mb-2">✂️ 가위를 든 신세경! 👩</p>
+        <p class="text-white/90">가로 = <b>위도</b> &nbsp;·&nbsp; 세로 = <b>경도</b></p>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow overflow-hidden">
+        <div class="px-5 pt-5">
+          <h3 class="font-jua text-lg text-blue-900">핵심 개념 정리표</h3>
+        </div>
+        <div class="overflow-x-auto p-5">
+          <table class="w-full text-sm border-collapse min-w-[480px]">
+            <thead>
+              <tr class="bg-slate-100 text-slate-600">
+                <th class="text-left p-3 rounded-l-lg">용어</th>
+                <th class="text-left p-3">기준</th>
+                <th class="text-left p-3 rounded-r-lg">뜻</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr>
+                <td class="p-3 font-bold text-lat">적도 (0°)</td>
+                <td class="p-3">위도의 기준선</td>
+                <td class="p-3">지구를 남북으로 반씩 나누는 가로선</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-bold text-lon">본초 자오선 (0°)</td>
+                <td class="p-3">경도의 기준선</td>
+                <td class="p-3">영국 그리니치 천문대를 지나는 세로선</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-bold text-lat">북위 / 남위</td>
+                <td class="p-3">적도 기준</td>
+                <td class="p-3">적도보다 <b>북쪽</b>이면 북위, <b>남쪽</b>이면 남위</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-bold text-lon">동경 / 서경</td>
+                <td class="p-3">본초 자오선 기준</td>
+                <td class="p-3">본초 자오선보다 <b>동쪽</b>이면 동경, <b>서쪽</b>이면 서경</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- MAP -->
+    <section id="screen-map" class="screen space-y-5">
+      <div class="text-center">
+        <h2 class="font-jua text-2xl md:text-3xl text-blue-900">인터랙티브 세계지도 탐험</h2>
+        <p class="text-slate-500 mt-1">도시 버튼을 누르거나 지도를 직접 클릭해보세요!</p>
+      </div>
+
+      <div class="flex flex-wrap gap-2 justify-center" id="cityButtons"></div>
+
+      <div class="bg-white rounded-2xl shadow p-4">
+        <div class="overflow-x-auto">
+          <canvas id="mapCanvas"></canvas>
+        </div>
+        <p class="text-xs text-slate-400 text-center mt-2">
+          <span class="text-lat font-bold">빨간 가로선</span> = 위도&nbsp;&nbsp;
+          <span class="text-lon font-bold">파란 세로선</span> = 경도
+        </p>
+      </div>
+
+      <div id="mapResult" class="bg-blue-50 border-2 border-dashed border-blue-200 rounded-2xl p-5 text-center">
+        <p class="text-slate-500">지도를 클릭하거나 도시 버튼을 눌러보세요!</p>
+      </div>
+    </section>
+
+    <!-- QUIZ -->
+    <section id="screen-quiz" class="screen space-y-5">
+      <div id="quiz-play">
+        <div class="flex items-center justify-between text-sm font-bold text-blue-900 mb-2">
+          <span id="quizStepLabel">문제 1 / 5</span>
+          <span>점수: <span id="quizScoreLabel">0</span></span>
+        </div>
+        <div class="w-full h-2 bg-blue-100 rounded-full mb-5 overflow-hidden">
+          <div id="quizProgressFill" class="h-full bg-blue-600 rounded-full transition-all" style="width:0%"></div>
+        </div>
+
+        <div class="bg-white rounded-3xl shadow p-6 md:p-8">
+          <h3 id="quizQuestion" class="font-jua text-xl md:text-2xl text-blue-900 mb-5 leading-snug"></h3>
+          <div id="quizOptions" class="grid sm:grid-cols-2 gap-3"></div>
+          <div id="quizFeedback" class="hidden mt-5 p-4 rounded-xl text-sm font-bold"></div>
+          <button id="quizNextBtn" class="hidden mt-4 bg-blue-600 hover:bg-blue-500 text-white font-bold px-5 py-3 rounded-full" onclick="app.nextQuestion()">다음 문제 ➔</button>
+        </div>
+      </div>
+
+      <div id="quiz-result" class="hidden bg-white rounded-3xl shadow p-8 text-center space-y-4">
+        <div id="quizBadgeIcon" class="text-6xl"></div>
+        <h3 class="font-jua text-2xl text-blue-900" id="quizResultTitle"></h3>
+        <p class="text-slate-500" id="quizResultDesc"></p>
+        <p class="font-jua text-xl text-blue-700">5문제 중 <span id="quizFinalScore"></span>문제 정답!</p>
+        <div class="flex justify-center gap-3">
+          <button class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-5 py-3 rounded-full" onclick="app.startQuiz()">🔄 다시 도전</button>
+          <button class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-5 py-3 rounded-full" onclick="app.showScreen('home')">🏠 홈으로</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="text-center text-xs text-slate-400 py-5">
+    © 초등 6학년 사회 · 지구본과 세계지도 위치 나타내기 (위도와 경도)
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var CITIES = [
+    { name: "서울", lat: 37.5, lon: 127.0 },
+    { name: "런던", lat: 51.5, lon: -0.1 },
+    { name: "시드니", lat: -33.9, lon: 151.2 },
+    { name: "뉴욕", lat: 40.7, lon: -74.0 }
+  ];
+
+  var QUIZ = [
+    {
+      q: "가로로 그어진 선을 무엇이라고 할까요? '가위'를 떠올려보세요! ✂️",
+      opts: ["위도", "경도", "적도선", "자오선"],
+      answer: 0
+    },
+    {
+      q: "세로로 그어진 선은 무엇일까요? 배우 '신세경'을 떠올려보세요! 👩",
+      opts: ["위도", "경도", "북위", "동경"],
+      answer: 1
+    },
+    {
+      q: "적도를 기준으로 지구 북쪽에 있는 위도를 무엇이라고 하나요?",
+      opts: ["북위", "남위", "동경", "서경"],
+      answer: 0
+    },
+    {
+      q: "본초 자오선을 기준으로 동쪽에 있는 경도는 무엇이라고 하나요?",
+      opts: ["동경", "서경", "북위", "남위"],
+      answer: 0
+    },
+    {
+      q: "'가위를 든 신세경!' 암기법에서 '가위'가 뜻하는 것은 무엇일까요?",
+      opts: ["가로 = 위도", "세로 = 경도", "적도 = 0°", "본초 자오선 = 0°"],
+      answer: 0
+    }
+  ];
+
+  // ---------- Map geometry ----------
+  // map1.png is a Google Maps (Web Mercator) screenshot at 1507x807px.
+  // These constants were derived by pixel-scanning known coastlines
+  // (Ecuador/Brazil/Gabon coasts on the equator, Algeria/Ghana coasts on
+  // the prime meridian) and solving the Mercator projection for a best fit.
+  var ORIG_W = 1507, ORIG_H = 807;
+  var ORIG_X0 = 737.8, ORIG_Y0 = 517.15, ORIG_KX = 5.647;
+  var ORIG_KRAD = ORIG_KX * 180 / Math.PI;
+
+  var SCALE = 0.46;
+  var IMG_DISP_W = Math.round(ORIG_W * SCALE);
+  var IMG_DISP_H = Math.round(ORIG_H * SCALE);
+  var RIGHT_PAD = 55; // extends coverage east so Sydney (151.2E) fits past the photo's right edge
+
+  var MAP_W = IMG_DISP_W + RIGHT_PAD, MAP_H = IMG_DISP_H;
+  var MARGIN = { left: 44, top: 18, right: 18, bottom: 30 };
+  var LOGICAL_W = MAP_W + MARGIN.left + MARGIN.right;
+  var LOGICAL_H = MAP_H + MARGIN.top + MARGIN.bottom;
+
+  var X0_D = ORIG_X0 * SCALE, Y0_D = ORIG_Y0 * SCALE;
+  var KX_D = ORIG_KX * SCALE, KRAD_D = ORIG_KRAD * SCALE;
+
+  function lonToX(lon) { return MARGIN.left + X0_D + KX_D * lon; }
+  function latToY(lat) {
+    var r = lat * Math.PI / 180;
+    return MARGIN.top + Y0_D - KRAD_D * Math.log(Math.tan(Math.PI / 4 + r / 2));
+  }
+  function xToLon(x) { return (x - MARGIN.left - X0_D) / KX_D; }
+  function yToLat(y) {
+    var m = (MARGIN.top + Y0_D - y) / KRAD_D;
+    var latRad = 2 * Math.atan(Math.exp(m)) - Math.PI / 2;
+    return latRad * 180 / Math.PI;
+  }
+
+  var canvas = document.getElementById("mapCanvas");
+  var ctx = canvas.getContext("2d");
+
+  var mapImg = new Image();
+  var mapImgLoaded = false;
+  mapImg.onload = function () { mapImgLoaded = true; drawMap(); };
+  mapImg.src = "images/map1.png";
+
+  function sizeCanvas() {
+    var dpr = window.devicePixelRatio || 1;
+    canvas.width = LOGICAL_W * dpr;
+    canvas.height = LOGICAL_H * dpr;
+    canvas.style.width = LOGICAL_W + "px";
+    canvas.style.height = LOGICAL_H + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  var selected = null;
+
+  function drawMap() {
+    ctx.clearRect(0, 0, LOGICAL_W, LOGICAL_H);
+
+    // ocean base (covers the padded strip beyond the photo's right edge too)
+    ctx.fillStyle = "#a3ccff";
+    ctx.fillRect(MARGIN.left, MARGIN.top, MAP_W, MAP_H);
+
+    if (mapImgLoaded) {
+      ctx.drawImage(mapImg, MARGIN.left, MARGIN.top, IMG_DISP_W, IMG_DISP_H);
+      // mask leftover Google Maps UI chrome baked into the screenshot (satellite thumbnail, watermark)
+      ctx.fillStyle = "#a3ccff";
+      ctx.fillRect(MARGIN.left, MARGIN.top + IMG_DISP_H - 38, 98, 38);
+      ctx.fillRect(MARGIN.left + 325, MARGIN.top + IMG_DISP_H - 22, 100, 22);
+    }
+
+    // grid: latitude lines (red family)
+    ctx.font = "10px 'Noto Sans KR', sans-serif";
+    for (var lat = -30; lat <= 60; lat += 30) {
+      var y = latToY(lat);
+      ctx.beginPath();
+      ctx.moveTo(MARGIN.left, y);
+      ctx.lineTo(MARGIN.left + MAP_W, y);
+      ctx.strokeStyle = lat === 0 ? "#e0393e" : "rgba(224,57,62,0.45)";
+      ctx.lineWidth = lat === 0 ? 2 : 1;
+      ctx.stroke();
+      ctx.fillStyle = "#b91c1c";
+      ctx.fillText((lat === 0 ? "적도 0°" : Math.abs(lat) + "°" + (lat > 0 ? "N" : "S")), 2, y + 3);
+    }
+
+    // grid: longitude lines (blue family)
+    for (var lon = -120; lon <= 150; lon += 30) {
+      var x = lonToX(lon);
+      ctx.beginPath();
+      ctx.moveTo(x, MARGIN.top);
+      ctx.lineTo(x, MARGIN.top + MAP_H);
+      ctx.strokeStyle = lon === 0 ? "#2f6fd6" : "rgba(47,111,214,0.4)";
+      ctx.lineWidth = lon === 0 ? 2 : 1;
+      ctx.stroke();
+      ctx.fillStyle = "#1d4ed8";
+      var label = lon === 0 ? "본초" : Math.abs(lon) + "°" + (lon > 0 ? "E" : "W");
+      ctx.fillText(label, x - 12, MARGIN.top + MAP_H + 14);
+    }
+
+    // city dots
+    CITIES.forEach(function (city) {
+      var x = lonToX(city.lon), y = latToY(city.lat);
+      ctx.beginPath();
+      ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = "#1e293b";
+      ctx.fill();
+    });
+
+    // selection crosshair
+    if (selected) {
+      var sx = lonToX(selected.lon), sy = latToY(selected.lat);
+
+      ctx.beginPath();
+      ctx.moveTo(MARGIN.left, sy);
+      ctx.lineTo(MARGIN.left + MAP_W, sy);
+      ctx.strokeStyle = "#e0393e";
+      ctx.lineWidth = 2.5;
+      ctx.setLineDash([6, 4]);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(sx, MARGIN.top);
+      ctx.lineTo(sx, MARGIN.top + MAP_H);
+      ctx.strokeStyle = "#2f6fd6";
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.beginPath();
+      ctx.arc(sx, sy, 6, 0, Math.PI * 2);
+      ctx.fillStyle = "#f59e0b";
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 2;
+      ctx.fill();
+      ctx.stroke();
+    }
+  }
+
+  function formatCoord(lat, lon) {
+    var latDir = lat >= 0 ? "북위" : "남위";
+    var lonDir = lon >= 0 ? "동경" : "서경";
+    return latDir + " " + Math.abs(lat).toFixed(1) + "° · " + lonDir + " " + Math.abs(lon).toFixed(1) + "°";
+  }
+
+  function selectPoint(lat, lon, label) {
+    lat = Math.max(-90, Math.min(90, lat));
+    lon = Math.max(-180, Math.min(180, lon));
+    selected = { lat: lat, lon: lon };
+    drawMap();
+
+    var latDir = lat >= 0 ? "북위" : "남위";
+    var lonDir = lon >= 0 ? "동경" : "서경";
+    document.getElementById("mapResult").innerHTML =
+      '<p class="font-jua text-lg text-blue-900 mb-2">' + label + '</p>' +
+      '<div class="flex flex-wrap justify-center gap-3">' +
+      '<span class="bg-lat-soft text-lat font-bold px-4 py-2 rounded-full">위도: ' + latDir + ' ' + Math.abs(lat).toFixed(1) + '°</span>' +
+      '<span class="bg-lon-soft text-lon font-bold px-4 py-2 rounded-full">경도: ' + lonDir + ' ' + Math.abs(lon).toFixed(1) + '°</span>' +
+      '</div>';
+  }
+
+  canvas.addEventListener("click", function (e) {
+    var rect = canvas.getBoundingClientRect();
+    var scaleX = LOGICAL_W / rect.width;
+    var scaleY = LOGICAL_H / rect.height;
+    var x = (e.clientX - rect.left) * scaleX;
+    var y = (e.clientY - rect.top) * scaleY;
+    if (x < MARGIN.left || x > MARGIN.left + MAP_W || y < MARGIN.top || y > MARGIN.top + MAP_H) return;
+    document.querySelectorAll(".city-btn").forEach(function (b) { b.classList.remove("active"); });
+    selectPoint(yToLat(y), xToLon(x), "클릭한 위치");
+  });
+
+  function buildCityButtons() {
+    var wrap = document.getElementById("cityButtons");
+    CITIES.forEach(function (city) {
+      var btn = document.createElement("button");
+      btn.className = "city-btn bg-white border-2 border-blue-200 hover:border-blue-400 text-blue-900 font-bold px-4 py-2 rounded-full shadow-sm transition";
+      btn.textContent = "📍 " + city.name;
+      btn.addEventListener("click", function () {
+        document.querySelectorAll(".city-btn").forEach(function (b) { b.classList.remove("active"); });
+        btn.classList.add("active");
+        selectPoint(city.lat, city.lon, city.name);
+      });
+      wrap.appendChild(btn);
+    });
+  }
+
+  // ---------- Web Audio feedback ----------
+  var audioCtx = null;
+  function getAudioCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  }
+  function beep(freq, duration, type, delay) {
+    var ac = getAudioCtx();
+    var osc = ac.createOscillator();
+    var gain = ac.createGain();
+    osc.type = type || "sine";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.15, ac.currentTime + (delay || 0));
+    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + (delay || 0) + duration);
+    osc.connect(gain);
+    gain.connect(ac.destination);
+    osc.start(ac.currentTime + (delay || 0));
+    osc.stop(ac.currentTime + (delay || 0) + duration);
+  }
+  function playCorrect() {
+    beep(880, 0.15, "sine", 0);
+    beep(1175, 0.2, "sine", 0.12);
+  }
+  function playWrong() {
+    beep(180, 0.3, "square", 0);
+  }
+
+  // ---------- Quiz logic ----------
+  var quizIndex = 0, quizScore = 0, answered = false;
+
+  function startQuiz() {
+    quizIndex = 0;
+    quizScore = 0;
+    document.getElementById("quiz-result").classList.add("hidden");
+    document.getElementById("quiz-play").classList.remove("hidden");
+    showScreen("quiz");
+    renderQuestion();
+  }
+
+  function renderQuestion() {
+    answered = false;
+    var item = QUIZ[quizIndex];
+    document.getElementById("quizStepLabel").textContent = "문제 " + (quizIndex + 1) + " / " + QUIZ.length;
+    document.getElementById("quizScoreLabel").textContent = quizScore;
+    document.getElementById("quizProgressFill").style.width = (quizIndex / QUIZ.length * 100) + "%";
+    document.getElementById("quizQuestion").textContent = item.q;
+
+    var optWrap = document.getElementById("quizOptions");
+    optWrap.innerHTML = "";
+    item.opts.forEach(function (opt, i) {
+      var b = document.createElement("button");
+      b.className = "opt-btn text-left bg-slate-50 hover:bg-blue-50 border-2 border-slate-200 rounded-xl px-4 py-3 font-bold transition";
+      b.textContent = opt;
+      b.addEventListener("click", function () { selectAnswer(i, b); });
+      optWrap.appendChild(b);
+    });
+
+    document.getElementById("quizFeedback").classList.add("hidden");
+    document.getElementById("quizNextBtn").classList.add("hidden");
+  }
+
+  function selectAnswer(i, btnEl) {
+    if (answered) return;
+    answered = true;
+    var item = QUIZ[quizIndex];
+    var correct = i === item.answer;
+    if (correct) { quizScore++; playCorrect(); } else { playWrong(); }
+
+    var buttons = document.querySelectorAll("#quizOptions .opt-btn");
+    buttons.forEach(function (b, idx) {
+      b.disabled = true;
+      if (idx === item.answer) b.classList.add("correct");
+      else if (idx === i) b.classList.add("wrong");
+    });
+
+    var fb = document.getElementById("quizFeedback");
+    fb.classList.remove("hidden");
+    if (correct) {
+      fb.className = "mt-5 p-4 rounded-xl text-sm font-bold bg-green-50 text-green-700";
+      fb.textContent = "⭕ 정답이에요! 잘했어요!";
+    } else {
+      fb.className = "mt-5 p-4 rounded-xl text-sm font-bold bg-red-50 text-red-700";
+      fb.textContent = "❌ 아쉬워요! 정답은 '" + item.opts[item.answer] + "' 예요.";
+    }
+
+    document.getElementById("quizScoreLabel").textContent = quizScore;
+    document.getElementById("quizNextBtn").classList.remove("hidden");
+    document.getElementById("quizNextBtn").textContent = quizIndex === QUIZ.length - 1 ? "결과 보기 🏁" : "다음 문제 ➔";
+  }
+
+  function nextQuestion() {
+    quizIndex++;
+    if (quizIndex >= QUIZ.length) { showResult(); return; }
+    renderQuestion();
+  }
+
+  function showResult() {
+    document.getElementById("quizProgressFill").style.width = "100%";
+    document.getElementById("quiz-play").classList.add("hidden");
+    var resultBox = document.getElementById("quiz-result");
+    resultBox.classList.remove("hidden");
+    resultBox.classList.add("pop-in");
+
+    var icon, title, desc;
+    if (quizScore === 5) { icon = "🏆"; title = "완벽해요! 지도 박사 훈장!"; desc = "가위를 든 신세경을 완전히 마스터했어요!"; }
+    else if (quizScore >= 3) { icon = "🥈"; title = "잘했어요!"; desc = "조금만 더 복습하면 만점이에요!"; }
+    else { icon = "🥉"; title = "다시 도전해봐요!"; desc = "암기비법 코너를 다시 보고 도전해보세요!"; }
+
+    document.getElementById("quizBadgeIcon").textContent = icon;
+    document.getElementById("quizResultTitle").textContent = title;
+    document.getElementById("quizResultDesc").textContent = desc;
+    document.getElementById("quizFinalScore").textContent = quizScore;
+  }
+
+  // ---------- Screen navigation ----------
+  function showScreen(name) {
+    document.querySelectorAll(".screen").forEach(function (s) { s.classList.remove("active"); });
+    document.getElementById("screen-" + name).classList.add("active");
+    document.querySelectorAll(".nav-btn").forEach(function (b) {
+      b.classList.toggle("active", b.dataset.target === name);
+    });
+    if (name === "map") { sizeCanvas(); drawMap(); }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  window.app = {
+    showScreen: showScreen,
+    startQuiz: startQuiz,
+    nextQuestion: nextQuestion
+  };
+
+  buildCityButtons();
+  sizeCanvas();
+  drawMap();
+})();
+</script>
+</body>
+</html>
