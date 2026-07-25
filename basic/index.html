@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>초등 4학년 과학 - 다양한 생물과 우리 생활 퀴즈 탐험대</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts import -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app" class="container">
+        <!-- Header Nav -->
+        <header class="app-header">
+            <div class="logo-area" onclick="game.showScreen('home')">
+                <span class="logo-icon">🔬</span>
+                <div class="logo-text">
+                    <h1>과학 탐험대</h1>
+                    <span class="sub-title">4-1 다양한 생물과 우리 생활</span>
+                </div>
+            </div>
+            
+            <nav class="nav-links">
+                <button class="nav-btn active" data-target="home">🏠 홈</button>
+                <button class="nav-btn" data-target="quiz-menu">🎯 퀴즈 도전</button>
+                <button class="nav-btn" data-target="microscope-lab">🔬 현미경 Lab</button>
+                <button class="nav-btn" data-target="sorting-game">📦 생물 분류</button>
+                <button class="nav-btn" data-target="study-note">📚 알짜 노트</button>
+            </nav>
+
+            <div class="sound-control">
+                <button id="sound-toggle-btn" class="icon-btn" title="음향 켜기/끄기">
+                    🔊
+                </button>
+            </div>
+        </header>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="main-content">
+
+            <!-- 1. HOME SCREEN -->
+            <section id="screen-home" class="screen active">
+                <div class="hero-banner">
+                    <div class="hero-text">
+                        <span class="badge-tag">초등 4학년 1학기 과학 4단원</span>
+                        <h2>다양한 생물과 우리 생활<br><span class="highlight">알짜 정리 퀴즈 게임!</span></h2>
+                        <p>실체 현미경 사용법부터 균류, 원생생물, 세균까지!<br>재미있는 퀴즈와 게임으로 신나게 과학 마스터가 되어보세요.</p>
+                        <div class="hero-actions">
+                            <button class="btn btn-primary btn-large" onclick="game.startQuiz('all')">
+                                🚀 전 범위 퀴즈 시작
+                            </button>
+                            <button class="btn btn-secondary btn-large" onclick="game.showScreen('study-note')">
+                                📖 핵심 빈칸 복습하기
+                            </button>
+                        </div>
+                    </div>
+                    <div class="hero-card-grid">
+                        <div class="feature-card" onclick="game.showScreen('microscope-lab')">
+                            <div class="card-icon">🔬</div>
+                            <h3>실체 현미경 Lab</h3>
+                            <p>명칭 맞추기 & 4단계 사용법 순서 퍼즐!</p>
+                        </div>
+                        <div class="feature-card" onclick="game.showScreen('sorting-game')">
+                            <div class="card-icon">🦠</div>
+                            <h3>생물 분류 챌린지</h3>
+                            <p>균류 vs 원생생물 vs 세균 쏙쏙 분류하기!</p>
+                        </div>
+                        <div class="feature-card" onclick="game.showScreen('quiz-menu')">
+                            <div class="card-icon">🏆</div>
+                            <h3>주제별 퀴즈 탐험</h3>
+                            <p>실체 현미경 / 균류 / 원생생물 / 세균 / 우리생활</p>
+                        </div>
+                        <div class="feature-card" onclick="game.showScreen('study-note')">
+                            <div class="card-icon">💡</div>
+                            <h3>알짜 정리 노트</h3>
+                            <p>학습지 원본 기반 빈칸 가리기 복습 노트</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Stats Summary -->
+                <div class="user-stats-bar">
+                    <div class="stat-item">
+                        <span class="stat-icon">⭐</span>
+                        <div class="stat-info">
+                            <span class="stat-value" id="stat-total-score">0</span>
+                            <span class="stat-label">누적 점수</span>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">🔥</span>
+                        <div class="stat-info">
+                            <span class="stat-value" id="stat-max-combo">0</span>
+                            <span class="stat-label">최고 콤보</span>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">🎖️</span>
+                        <div class="stat-info">
+                            <span class="stat-value" id="stat-badge-count">0 / 6</span>
+                            <span class="stat-label">획득 훈장</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. QUIZ SELECTION MENU -->
+            <section id="screen-quiz-menu" class="screen">
+                <div class="section-title">
+                    <h2>🎯 퀴즈 모드 선택</h2>
+                    <p>도전하고 싶은 과학 단원 주제를 선택하세요!</p>
+                </div>
+                <div class="quiz-category-grid">
+                    <div class="cat-card" onclick="game.startQuiz('all')">
+                        <div class="cat-badge">전체</div>
+                        <div class="cat-icon">🌟</div>
+                        <h3>종합 알짜 정리 퀴즈</h3>
+                        <p>4단원 전체 학습지 20문항 무작위 도전!</p>
+                        <span class="btn-sm">도전하기 ➔</span>
+                    </div>
+                    <div class="cat-card" onclick="game.startQuiz('microscope')">
+                        <div class="cat-badge">1파트</div>
+                        <div class="cat-icon">🔬</div>
+                        <h3>실체 현미경의 구조와 사용법</h3>
+                        <p>각 부위의 명칭, 하는 일, 사용 순서 집중 퀴즈</p>
+                        <span class="btn-sm">도전하기 ➔</span>
+                    </div>
+                    <div class="cat-card" onclick="game.startQuiz('fungi')">
+                        <div class="cat-badge">2파트</div>
+                        <div class="cat-icon">🍄</div>
+                        <h3>버섯과 곰팡이 (균류)</h3>
+                        <p>균사, 포자, 주름, 알갱이, 특징 및 사는 곳 퀴즈</p>
+                        <span class="btn-sm">도전하기 ➔</span>
+                    </div>
+                    <div class="cat-card" onclick="game.startQuiz('protist')">
+                        <div class="cat-badge">3파트</div>
+                        <div class="cat-icon">🌿</div>
+                        <h3>해캄과 짚신벌레 (원생생물)</h3>
+                        <p>나선 가닥, 털, 종벌레, 유글레나, 미역, 다시마 등</p>
+                        <span class="btn-sm">도전하기 ➔</span>
+                    </div>
+                    <div class="cat-card" onclick="game.startQuiz('bacteria')">
+                        <div class="cat-badge">4파트</div>
+                        <div class="cat-icon">🧫</div>
+                        <h3>세균과 우리 생활의 영향</h3>
+                        <p>세균의 모양과 특징, 생명 과학의 이용 예시까지</p>
+                        <span class="btn-sm">도전하기 ➔</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. ACTIVE QUIZ GAMEPLAY SCREEN -->
+            <section id="screen-quiz-play" class="screen">
+                <div class="quiz-play-header">
+                    <div class="quiz-progress-bar">
+                        <div id="quiz-progress-fill" class="progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="quiz-meta-info">
+                        <span id="quiz-step-counter">문제 1 / 10</span>
+                        <div class="quiz-combo-badge" id="quiz-combo-display" style="display:none;">
+                            🔥 <span id="quiz-combo-count">2</span> COMBO!
+                        </div>
+                        <span class="quiz-score-display">점수: <strong id="quiz-current-score">0</strong></span>
+                    </div>
+                </div>
+
+                <div class="quiz-card-box">
+                    <div class="question-header-tag" id="question-category-tag">실체 현미경</div>
+                    <h3 class="question-title" id="question-text">문제가 여기에 표시됩니다.</h3>
+                    
+                    <!-- Question Diagram / Graphic Container if available -->
+                    <div class="question-media" id="question-media-box" style="display:none;"></div>
+
+                    <!-- Answer Options -->
+                    <div class="options-grid" id="options-container">
+                        <!-- Dynamic Options generated via JS -->
+                    </div>
+
+                    <!-- Fill-in-the-blank input mode fallback -->
+                    <div class="short-answer-box" id="short-answer-box" style="display:none;">
+                        <input type="text" id="short-answer-input" placeholder="정답을 입력하세요 (예: 균류)">
+                        <button class="btn btn-primary" onclick="game.submitShortAnswer()">정답 제출</button>
+                    </div>
+
+                    <!-- Feedback / Hint Box -->
+                    <div class="explanation-box" id="explanation-box" style="display:none;">
+                        <div class="result-status-title" id="result-status-title">⭕ 정답입니다!</div>
+                        <p class="explanation-text" id="explanation-text">해설 내용이 여기에 들어갑니다.</p>
+                        <button class="btn btn-primary" id="next-q-btn" onclick="game.nextQuestion()">다음 문제로 ➔</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. QUIZ RESULT SCREEN -->
+            <section id="screen-quiz-result" class="screen">
+                <div class="result-card">
+                    <div class="result-badge-icon" id="result-badge-emoji">🎉</div>
+                    <h2 id="result-title">탐험 완료!</h2>
+                    <p class="result-subtitle" id="result-subtitle">축하합니다! 퀴즈를 모두 완료했습니다.</p>
+
+                    <div class="result-stats-grid">
+                        <div class="r-stat">
+                            <span class="r-val" id="res-score">100</span>
+                            <span class="r-lbl">획득 점수</span>
+                        </div>
+                        <div class="r-stat">
+                            <span class="r-val" id="res-accuracy">100%</span>
+                            <span class="r-lbl">정답률</span>
+                        </div>
+                        <div class="r-stat">
+                            <span class="r-val" id="res-combo">5</span>
+                            <span class="r-lbl">최대 콤보</span>
+                        </div>
+                    </div>
+
+                    <div class="badge-unlocked-banner" id="badge-unlocked-banner" style="display:none;">
+                        <span class="b-icon" id="unlocked-b-icon">🎖️</span>
+                        <div>
+                            <strong id="unlocked-b-title">새로운 훈장 획득!</strong>
+                            <p id="unlocked-b-desc">설명</p>
+                        </div>
+                    </div>
+
+                    <!-- Incorrect questions review list -->
+                    <div class="review-questions-box" id="review-questions-box" style="display:none;">
+                        <h3>📝 틀린 문제 다시보기</h3>
+                        <div id="review-list-container"></div>
+                    </div>
+
+                    <div class="result-actions">
+                        <button class="btn btn-primary btn-large" onclick="game.restartCurrentQuiz()">
+                            🔄 다시 도전하기
+                        </button>
+                        <button class="btn btn-secondary btn-large" onclick="game.showScreen('quiz-menu')">
+                            🎯 퀴즈 목록으로
+                        </button>
+                        <button class="btn btn-outline btn-large" onclick="game.showScreen('home')">
+                            🏠 메인으로
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. MICROSCOPE LAB SCREEN -->
+            <section id="screen-microscope-lab" class="screen">
+                <div class="section-title">
+                    <h2>🔬 실체 현미경 연구실</h2>
+                    <p>현미경 각 부분의 이름을 클릭하거나 사용 순서를 올바르게 맞추세요!</p>
+                </div>
+
+                <div class="lab-tab-nav">
+                    <button class="tab-btn active" onclick="game.switchLabTab('parts')">📌 각 부분 명칭 맞추기</button>
+                    <button class="tab-btn" onclick="game.switchLabTab('steps')">🔢 사용 순서 맞추기 퍼즐</button>
+                </div>
+
+                <!-- Lab Tab 1: Parts Matching -->
+                <div id="lab-tab-parts" class="lab-content active">
+                    <div class="lab-parts-layout">
+                        <!-- SVG Microscope Graphic with interactive hotspots -->
+                        <div class="microscope-diagram-container">
+                            <svg viewBox="0 0 400 500" class="microscope-svg">
+                                <!-- Base -->
+                                <path d="M100,440 L300,440 L280,480 L120,480 Z" fill="#475569" stroke="#1e293b" stroke-width="4"/>
+                                <rect x="140" y="420" width="120" height="20" rx="5" fill="#334155"/>
+                                
+                                <!-- Arm / Body -->
+                                <path d="M260,420 C260,250 250,150 210,130 L190,130 C230,150 230,250 230,420 Z" fill="#64748b" stroke="#334155" stroke-width="3"/>
+                                
+                                <!-- Eyepiece (접안렌즈) Hotspot 1 -->
+                                <g class="scope-part" data-part="접안렌즈" onclick="game.selectPartHotspot('접안렌즈')">
+                                    <rect x="185" y="60" width="30" height="60" rx="4" fill="#0284c7" stroke="#0369a1" stroke-width="3"/>
+                                    <ellipse cx="200" cy="60" rx="18" ry="6" fill="#38bdf8"/>
+                                    <circle cx="200" cy="90" r="18" class="hotspot-pulse"/>
+                                    <text x="200" y="94" text-anchor="middle" fill="#fff" font-weight="bold" font-size="12">①</text>
+                                </g>
+
+                                <!-- Revolving nosepiece (회전판) Hotspot 2 -->
+                                <g class="scope-part" data-part="회전판" onclick="game.selectPartHotspot('회전판')">
+                                    <ellipse cx="200" cy="180" rx="35" ry="12" fill="#eab308" stroke="#ca8a04" stroke-width="3"/>
+                                    <circle cx="200" cy="180" r="16" class="hotspot-pulse"/>
+                                    <text x="200" y="184" text-anchor="middle" fill="#fff" font-weight="bold" font-size="12">②</text>
+                                </g>
+
+                                <!-- Objective Lens (대물렌즈) Hotspot 3 -->
+                                <g class="scope-part" data-part="대물렌즈" onclick="game.selectPartHotspot('대물렌즈')">
+                                    <rect x="190" y="192" width="20" height="40" fill="#10b981" stroke="#059669" stroke-width="3"/>
+                                    <circle cx="200" cy="212" r="16" class="hotspot-pulse"/>
+                                    <text x="200" y="216" text-anchor="middle" fill="#fff" font-weight="bold" font-size="12">③</text>
+                                </g>
+
+                                <!-- Stage (재물대) Hotspot 4 -->
+                                <g class="scope-part" data-part="재물대" onclick="game.selectPartHotspot('재물대')">
+                                    <rect x="120" y="270" width="160" height="16" rx="4" fill="#8b5cf6" stroke="#6d28d9" stroke-width="3"/>
+                                    <circle cx="200" cy="278" r="16" class="hotspot-pulse"/>
+                                    <text x="200" y="282" text-anchor="middle" fill="#fff" font-weight="bold" font-size="12">④</text>
+                                </g>
+
+                                <!-- Focus Knob (초점 조절 나사) Hotspot 5 -->
+                                <g class="scope-part" data-part="초점 조절 나사" onclick="game.selectPartHotspot('초점 조절 나사')">
+                                    <circle cx="265" cy="220" r="22" fill="#ec4899" stroke="#be185d" stroke-width="3"/>
+                                    <circle cx="265" cy="220" r="14" class="hotspot-pulse"/>
+                                    <text x="265" y="224" text-anchor="middle" fill="#fff" font-weight="bold" font-size="12">⑤</text>
+                                </g>
+
+                                <!-- Light Adjust Knob (조명 조절 나사) Hotspot 6 -->
+                                <g class="scope-part" data-part="조명 조절 나사" onclick="game.selectPartHotspot('조명 조절 나사')">
+                                    <circle cx="135" cy="430" r="18" fill="#f97316" stroke="#c2410c" stroke-width="3"/>
+                                    <circle cx="135" cy="430" r="12" class="hotspot-pulse"/>
+                                    <text x="135" y="434" text-anchor="middle" fill="#fff" font-weight="bold" font-size="12">⑥</text>
+                                </g>
+                            </svg>
+                        </div>
+
+                        <!-- Right Panel: Part Description and Questions -->
+                        <div class="lab-quiz-panel">
+                            <div class="part-prompt-card">
+                                <span class="badge-tag">부위 탐구 문제</span>
+                                <h3 id="lab-part-question">다음 설명에 해당하는 현미경 부위를 선택하세요:</h3>
+                                <p id="lab-part-desc" class="desc-highlight">"눈으로 보는 렌즈로 물체의 상을 확대한다."</p>
+                            </div>
+
+                            <div class="part-buttons-grid" id="part-buttons-grid">
+                                <button class="btn btn-outline lab-part-btn" onclick="game.answerPartName('접안렌즈')">👁️ 접안렌즈</button>
+                                <button class="btn btn-outline lab-part-btn" onclick="game.answerPartName('대물렌즈')">🔍 대물렌즈</button>
+                                <button class="btn btn-outline lab-part-btn" onclick="game.answerPartName('초점 조절 나사')">🎯 초점 조절 나사</button>
+                                <button class="btn btn-outline lab-part-btn" onclick="game.answerPartName('조명 조절 나사')">💡 조명 조절 나사</button>
+                                <button class="btn btn-outline lab-part-btn" onclick="game.answerPartName('재물대')">📦 재물대</button>
+                                <button class="btn btn-outline lab-part-btn" onclick="game.answerPartName('회전판')">🔄 회전판</button>
+                            </div>
+
+                            <div class="lab-feedback" id="lab-part-feedback" style="display:none;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lab Tab 2: Microscope Usage Steps Puzzle -->
+                <div id="lab-tab-steps" class="lab-content">
+                    <div class="steps-puzzle-container">
+                        <div class="puzzle-intro">
+                            <h3>🧩 실체 현미경 올바른 사용 순서 1~4단계를 완성하세요!</h3>
+                            <p>아래 섞인 순서 카드를 클릭하여 ① ➔ ② ➔ ③ ➔ ④ 단계 순서대로 배치해보세요.</p>
+                        </div>
+
+                        <div class="steps-drop-zone" id="steps-drop-zone">
+                            <div class="step-slot" data-step="1">
+                                <span class="slot-num">① 단계</span>
+                                <div class="slot-card-holder" id="slot-1"></div>
+                            </div>
+                            <div class="step-slot" data-step="2">
+                                <span class="slot-num">② 단계</span>
+                                <div class="slot-card-holder" id="slot-2"></div>
+                            </div>
+                            <div class="step-slot" data-step="3">
+                                <span class="slot-num">③ 단계</span>
+                                <div class="slot-card-holder" id="slot-3"></div>
+                            </div>
+                            <div class="step-slot" data-step="4">
+                                <span class="slot-num">④ 단계</span>
+                                <div class="slot-card-holder" id="slot-4"></div>
+                            </div>
+                        </div>
+
+                        <div class="steps-pool" id="steps-pool">
+                            <!-- Cards will be populated via JS -->
+                        </div>
+
+                        <div class="steps-actions">
+                            <button class="btn btn-primary btn-large" onclick="game.checkStepsOrder()">✅ 순서 확인하기</button>
+                            <button class="btn btn-outline" onclick="game.resetStepsOrder()">🔄 다시 섞기</button>
+                        </div>
+
+                        <div id="steps-result-msg" class="steps-result-msg" style="display:none;"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. CATEGORY SORTING GAME SCREEN -->
+            <section id="screen-sorting-game" class="screen">
+                <div class="section-title">
+                    <h2>📦 생물 분류 챌린지</h2>
+                    <p>제시되는 생물 카드를 올바른 상자([균류], [원생생물], [세균])로 쏙쏙 넣어 분류하세요!</p>
+                </div>
+
+                <div class="sorting-game-container">
+                    <div class="sorting-meta">
+                        <span>남은 카드: <strong id="sort-cards-left">10</strong> / 10</span>
+                        <span>현재 점수: <strong id="sort-score">0</strong></span>
+                    </div>
+
+                    <!-- Current Card Display -->
+                    <div class="card-display-area">
+                        <div class="organism-card" id="current-organism-card">
+                            <div class="org-emoji" id="org-emoji">🍄</div>
+                            <h3 class="org-name" id="org-name">버섯</h3>
+                            <p class="org-desc" id="org-desc">균사로 이루어져 있고 포자로 번식함</p>
+                        </div>
+                    </div>
+
+                    <!-- Target Bins -->
+                    <div class="bins-grid">
+                        <div class="target-bin bin-fungi" onclick="game.sortCurrentOrganism('균류')">
+                            <div class="bin-header">
+                                <span class="bin-icon">🍄</span>
+                                <h3>균류</h3>
+                            </div>
+                            <p class="bin-hint">버섯, 곰팡이 등</p>
+                        </div>
+
+                        <div class="target-bin bin-protist" onclick="game.sortCurrentOrganism('원생생물')">
+                            <div class="bin-header">
+                                <span class="bin-icon">🌿</span>
+                                <h3>원생생물</h3>
+                            </div>
+                            <p class="bin-hint">해캄, 짚신벌레, 미역, 김 등</p>
+                        </div>
+
+                        <div class="target-bin bin-bacteria" onclick="game.sortCurrentOrganism('세균')">
+                            <div class="bin-header">
+                                <span class="bin-icon">🧫</span>
+                                <h3>세균</h3>
+                            </div>
+                            <p class="bin-hint">공/막대/나선 모양, 단순 구조</p>
+                        </div>
+                    </div>
+
+                    <div class="sort-feedback" id="sort-feedback" style="display:none;"></div>
+                </div>
+            </section>
+
+            <!-- 7. STUDY NOTE SCREEN (ALJJA NOTE) -->
+            <section id="screen-study-note" class="screen">
+                <div class="section-title">
+                    <h2>📚 알짜 정리 복습 노트</h2>
+                    <p>학습지 원본 100% 반영! 빈칸을 클릭하면 정답이 보입니다. 시험 전 빈칸 테스트로 활용하세요.</p>
+                </div>
+
+                <div class="note-filter-bar">
+                    <button class="btn btn-sm btn-outline active" onclick="game.toggleBlankAnswers(true)">👁️ 빈칸 답 모두 보기</button>
+                    <button class="btn btn-sm btn-outline" onclick="game.toggleBlankAnswers(false)">🙈 빈칸 모두 숨기기</button>
+                </div>
+
+                <div class="study-notes-container">
+                    
+                    <!-- Section 1 -->
+                    <article class="note-section">
+                        <div class="note-sec-header">
+                            <span class="sec-num">01</span>
+                            <h3>실체 현미경 각 부분의 이름, 하는 일 & 사용법</h3>
+                        </div>
+                        <div class="note-sec-body">
+                            <table class="concept-table">
+                                <thead>
+                                    <tr>
+                                        <th>이름</th>
+                                        <th>하는 일</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>초점 조절 나사</strong></td>
+                                        <td>상의 초점을 맞출 때 사용하는 나사이다.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>조명 조절 나사</strong></td>
+                                        <td>조명을 켜고 끄며 밝기를 조절하는 나사이다.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>재물대</strong></td>
+                                        <td>관찰 대상을 올려놓는 곳이다.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>회전판</strong></td>
+                                        <td>대물렌즈의 배율을 조절하는 나사이다.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>접안렌즈</strong></td>
+                                        <td>눈으로 보는 렌즈로 물체의 상을 확대한다.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>대물렌즈</strong></td>
+                                        <td>관찰 대상 쪽의 렌즈로 물체의 상을 확대한다.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <h4>🔍 실체 현미경 사용 순서</h4>
+                            <ol class="step-list">
+                                <li>회전판을 돌려 대물렌즈의 배율을 가장 <span class="blank-word" onclick="this.classList.toggle('revealed')">낮게</span> 하고, 재물대에 관찰 대상을 올려놓는다.</li>
+                                <li>전원을 켜고 조명 조절 나사로 <span class="blank-word" onclick="this.classList.toggle('revealed')">빛의 밝기</span>를 조절한다.</li>
+                                <li>옆에서 보면서 초점 조절 나사로 <span class="blank-word" onclick="this.classList.toggle('revealed')">대물렌즈</span>를 관찰 대상에 가깝게 내린다.</li>
+                                <li>접안렌즈로 관찰 대상을 보면서 대물렌즈를 천천히 올려 초점을 맞춘다.</li>
+                            </ol>
+                        </div>
+                    </article>
+
+                    <!-- Section 2 -->
+                    <article class="note-section">
+                        <div class="note-sec-header">
+                            <span class="sec-num">02</span>
+                            <h3>버섯과 곰팡이 (균류)</h3>
+                        </div>
+                        <div class="note-sec-body">
+                            <p>• 버섯과 곰팡이 같은 생물을 <span class="blank-word" onclick="this.classList.toggle('revealed')">균류</span>라고 한다.</p>
+                            
+                            <table class="concept-table">
+                                <thead>
+                                    <tr>
+                                        <th>관찰 도구</th>
+                                        <th>버섯의 특징</th>
+                                        <th>곰팡이의 특징</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>맨눈, 돋보기</strong></td>
+                                        <td>윗부분은 우산처럼, 아랫부분은 막대처럼 생김. 윗부분 안쪽에 <span class="blank-word" onclick="this.classList.toggle('revealed')">주름</span>이 많이 보임.</td>
+                                        <td>솜털 같은 것이 많이 보이고 그 끝부분에 둥근 알갱이가 달려 있음.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>실체 현미경</strong></td>
+                                        <td>실처럼 가늘고 긴 가닥이 거미줄처럼 엉켜 있음.</td>
+                                        <td>실처럼 가늘고 긴 가닥 끝에 둥근 <span class="blank-word" onclick="this.classList.toggle('revealed')">알갱이</span>가 많이 달려 있음.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <ul class="bullet-list">
+                                <li>버섯과 곰팡이는 생명 활동을 하는 생물이다.</li>
+                                <li>균류는 <span class="blank-word" onclick="this.classList.toggle('revealed')">균사</span>로 이루어져 있고, <span class="blank-word" onclick="this.classList.toggle('revealed')">포자</span>를 이용해 번식한다.</li>
+                                <li>균류는 따뜻하고 <span class="blank-word" onclick="this.classList.toggle('revealed')">습한 곳</span>에서 잘 자란다.</li>
+                                <li>균류는 스스로 <span class="blank-word" onclick="this.classList.toggle('revealed')">양분</span>을 만들지 못하고 죽은 생물이나 다른 생물에서 양분을 얻는다.</li>
+                            </ul>
+                        </div>
+                    </article>
+
+                    <!-- Section 3 -->
+                    <article class="note-section">
+                        <div class="note-sec-header">
+                            <span class="sec-num">03</span>
+                            <h3>해캄과 짚신벌레 (원생생물)</h3>
+                        </div>
+                        <div class="note-sec-body">
+                            <ul class="bullet-list">
+                                <li>해캄과 짚신벌레는 동물, 식물, 균류와 <span class="blank-word" onclick="this.classList.toggle('revealed')">다른</span> 생물이다.</li>
+                                <li>해캄과 짚신벌레 같은 생물을 <span class="blank-word" onclick="this.classList.toggle('revealed')">원생생물</span>이라고 한다.</li>
+                                <li><strong>해캄:</strong> 초록색의 실처럼 가는 <span class="blank-word" onclick="this.classList.toggle('revealed')">나선</span> 가닥이 여러 개 보임. 안에 작고 둥근 초록색 알갱이가 있고 대나무처럼 마디로 나누어짐.</li>
+                                <li><strong>짚신벌레:</strong> 길쭉한 <span class="blank-word" onclick="this.classList.toggle('revealed')">둥근</span> 모양이고, 바깥쪽에 가는 <span class="blank-word" onclick="this.classList.toggle('revealed')">털</span>이 보임.</li>
+                                <li>논, 연못이나 하천의 원생생물: 해캄, 짚신벌레, <span class="blank-word" onclick="this.classList.toggle('revealed')">종벌레</span>, <span class="blank-word" onclick="this.classList.toggle('revealed')">유글레나</span>, 반달말 등.</li>
+                                <li>바다의 원생생물: <span class="blank-word" onclick="this.classList.toggle('revealed')">미역</span>, 다시마, 김 등.</li>
+                            </ul>
+                        </div>
+                    </article>
+
+                    <!-- Section 4 -->
+                    <article class="note-section">
+                        <div class="note-sec-header">
+                            <span class="sec-num">04</span>
+                            <h3>다양한 세균 & 생물의 영향 및 생명공학</h3>
+                        </div>
+                        <div class="note-sec-body">
+                            <h4>🧫 세균의 생김새와 특징</h4>
+                            <ul class="bullet-list">
+                                <li>모양: 공 모양의 세균, 막대 모양의 세균, <span class="blank-word" onclick="this.classList.toggle('revealed')">나선</span> 모양의 세균</li>
+                                <li>크기가 매우 <span class="blank-word" onclick="this.classList.toggle('revealed')">작아서</span> 맨눈으로 관찰할 수 없음. 균류/원생생물보다 크기가 작고 생김새가 <span class="blank-word" onclick="this.classList.toggle('revealed')">단순</span>함.</li>
+                                <li>적당한 조건이 되면 많은 수로 <span class="blank-word" onclick="this.classList.toggle('revealed')">빠르게</span> 번식함.</li>
+                                <li>땅, 물, 생물의 몸속, 물건 등 우리 주변 곳곳에 산다.</li>
+                            </ul>
+
+                            <h4>⚖️ 생물이 우리 생활에 미치는 영향</h4>
+                            <table class="concept-table">
+                                <tbody>
+                                    <tr>
+                                        <th>이로운 영향</th>
+                                        <td>
+                                            • <span class="blank-word" onclick="this.classList.toggle('revealed')">균류</span>와 세균은 죽은 생물을 분해한다.<br>
+                                            • <span class="blank-word" onclick="this.classList.toggle('revealed')">원생생물</span>은 다른 생물의 먹이가 되거나 산소를 만든다.<br>
+                                            • 균류와 세균은 김치, 된장, 요구르트 등의 음식을 만드는 데 이용된다.
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>해로운 영향</th>
+                                        <td>
+                                            • 균류와 <span class="blank-word" onclick="this.classList.toggle('revealed')">세균</span>은 음식이나 물건을 상하게 한다.<br>
+                                            • 독버섯(균류)을 먹으면 질병에 걸릴 수 있다.<br>
+                                            • 일부 원생생물의 수가 많아지면 <span class="blank-word" onclick="this.classList.toggle('revealed')">적조</span> 현상이 일어난다.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <h4>🧪 생명 과학의 이용 예</h4>
+                            <ul class="bullet-list">
+                                <li>빠르게 번식하는 세균 ➔ 많은 양의 의약품 생성</li>
+                                <li>곤충을 죽게 하는 균류 ➔ <span class="blank-word" onclick="this.classList.toggle('revealed')">생물 농약</span></li>
+                                <li>기름 성분이 있는 원생생물 ➔ 생물 연료</li>
+                                <li><span class="blank-word" onclick="this.classList.toggle('revealed')">오염 물질</span>을 분해하는 세균 ➔ 하수 처리</li>
+                                <li>세균을 자라지 못하게 하는 균류 ➔ <span class="blank-word" onclick="this.classList.toggle('revealed')">질병 치료 약</span> (항생제)</li>
+                                <li>건강에 좋은 성분이 있는 원생생물 ➔ 건강식품</li>
+                            </ul>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>© 초등 4학년 1학기 과학 알짜 정리 퀴즈 탐험대 | 4. 다양한 생물과 우리 생활</p>
+        </footer>
+    </div>
+
+    <!-- JS Scripts -->
+    <script src="app.js"></script>
+</body>
+</html>

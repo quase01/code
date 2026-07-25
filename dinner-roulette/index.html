@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>저녁 메뉴 룰렛</title>
+<style>
+  :root {
+    --bg: #fbf3e7;
+    --bg-2: #f3e4ce;
+    --ink: #2e2620;
+    --ink-soft: #6b5d4f;
+    --accent: #d93a2b;
+    --accent-ink: #fff8f0;
+    --line: rgba(46, 38, 32, 0.14);
+    --card-bg: #fffdf9;
+    --shadow: rgba(46, 38, 32, 0.22);
+    --seg-1: #4c7a5a;
+    --seg-2: #d93a2b;
+    --seg-3: #f2a93b;
+    --seg-4: #c97b3d;
+    --rim: #2e2620;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1712;
+      --bg-2: #241d16;
+      --ink: #f3e9dc;
+      --ink-soft: #bda995;
+      --accent: #ff6a52;
+      --accent-ink: #1c1712;
+      --line: rgba(243, 233, 220, 0.16);
+      --card-bg: #262019;
+      --shadow: rgba(0, 0, 0, 0.55);
+      --rim: #f3e9dc;
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      repeating-linear-gradient(
+        95deg,
+        var(--bg) 0px,
+        var(--bg) 2px,
+        var(--bg-2) 2px,
+        var(--bg-2) 4px
+      );
+    color: var(--ink);
+    font-family: "Pretendard Variable", -apple-system, BlinkMacSystemFont,
+      "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: clamp(20px, 4vw, 56px) 16px 64px;
+  }
+
+  .page {
+    width: 100%;
+    max-width: 920px;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(20px, 3vw, 32px);
+  }
+
+  header.masthead {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .eyebrow {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(28px, 5vw, 42px);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  .sub {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 15px;
+  }
+
+  .stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(240px, 0.9fr);
+    gap: clamp(18px, 3vw, 28px);
+    align-items: start;
+  }
+
+  @media (max-width: 720px) {
+    .stage {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .wheel-card {
+    background: var(--card-bg);
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    padding: clamp(20px, 4vw, 36px);
+    box-shadow: 0 20px 50px -28px var(--shadow);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+  }
+
+  .wheel-wrap {
+    position: relative;
+    width: min(78vw, 340px);
+    aspect-ratio: 1 / 1;
+  }
+
+  .wheel-wrap canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    border-radius: 50%;
+    filter: drop-shadow(0 14px 24px var(--shadow));
+    transition: transform 4.2s cubic-bezier(0.12, 0.72, 0.1, 1);
+    will-change: transform;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .wheel-wrap canvas {
+      transition-duration: 0.4s;
+    }
+  }
+
+  .pointer {
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 34px;
+    height: 40px;
+    z-index: 3;
+    filter: drop-shadow(0 3px 4px var(--shadow));
+  }
+
+  .pointer svg { display: block; }
+
+  .hub-pin {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--rim);
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    box-shadow: 0 0 0 4px var(--card-bg);
+  }
+
+  .spin-btn {
+    appearance: none;
+    border: none;
+    cursor: pointer;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-family: inherit;
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    padding: 14px 40px;
+    border-radius: 999px;
+    box-shadow: 0 10px 24px -10px var(--shadow), inset 0 -3px 0 rgba(0,0,0,0.15);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .spin-btn:hover:not(:disabled) { transform: translateY(-2px); }
+  .spin-btn:active:not(:disabled) { transform: translateY(1px); }
+
+  .spin-btn:focus-visible,
+  .modal-close:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .spin-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .spin-count {
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tally-card {
+    background: var(--card-bg);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    padding: clamp(18px, 3vw, 26px);
+    box-shadow: 0 20px 50px -28px var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .tally-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 4px;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--accent) 0 10px,
+      transparent 10px 20px
+    );
+    opacity: 0.5;
+  }
+
+  .tally-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .tally-head h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 800;
+  }
+
+  .reset-btn {
+    appearance: none;
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    padding: 2px;
+  }
+
+  .reset-btn:hover { color: var(--accent); }
+
+  .tally-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .tally-row {
+    display: grid;
+    grid-template-columns: 66px 1fr 28px;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+  }
+
+  .tally-name {
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tally-bar-track {
+    height: 10px;
+    border-radius: 999px;
+    background: var(--bg-2);
+    overflow: hidden;
+  }
+
+  .tally-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    width: 0%;
+    transition: width 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .tally-count {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-soft);
+    font-size: 13px;
+  }
+
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 15, 10, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 10;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .ticket {
+    background: var(--card-bg);
+    color: var(--ink);
+    border-radius: 18px;
+    padding: 32px 30px 26px;
+    width: min(92vw, 340px);
+    text-align: center;
+    position: relative;
+    box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.5);
+    transform: scale(0.85) translateY(10px);
+    opacity: 0;
+    transition: transform 0.28s cubic-bezier(0.2, 0.9, 0.25, 1.2), opacity 0.22s ease;
+  }
+
+  .modal-overlay.open .ticket {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+
+  .ticket::before,
+  .ticket::after {
+    content: "";
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    background: rgba(20, 15, 10, 0.5);
+    border-radius: 50%;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  .ticket::before { left: -11px; }
+  .ticket::after { right: -11px; }
+
+  .ticket-eyebrow {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .ticket-result {
+    font-size: clamp(30px, 8vw, 40px);
+    font-weight: 800;
+    margin: 10px 0 4px;
+    text-wrap: balance;
+  }
+
+  .ticket-note {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin: 0 0 20px;
+  }
+
+  .modal-close {
+    appearance: none;
+    border: none;
+    cursor: pointer;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-family: inherit;
+    font-weight: 800;
+    font-size: 15px;
+    padding: 11px 30px;
+    border-radius: 999px;
+    box-shadow: inset 0 -3px 0 rgba(0,0,0,0.15);
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="masthead">
+    <span class="eyebrow">Dinner Roulette</span>
+    <h1>오늘 저녁 뭐 먹지?</h1>
+    <p class="sub">룰렛을 돌려서 저녁 메뉴를 정해보세요. 결과는 계속 쌓여요.</p>
+  </header>
+
+  <div class="stage">
+    <section class="wheel-card">
+      <div class="wheel-wrap">
+        <div class="pointer" aria-hidden="true">
+          <svg width="34" height="40" viewBox="0 0 34 40">
+            <path d="M17 40 L2 10 Q17 20 32 10 Z" fill="var(--accent)" stroke="var(--card-bg)" stroke-width="2" />
+          </svg>
+        </div>
+        <canvas id="wheel" width="640" height="640" role="img" aria-label="저녁 메뉴 룰렛 휠"></canvas>
+        <div class="hub-pin" aria-hidden="true"></div>
+      </div>
+
+      <button class="spin-btn" id="spinBtn" type="button">돌리기</button>
+      <p class="spin-count" id="spinCount">아직 돌리지 않았어요</p>
+    </section>
+
+    <aside class="tally-card" aria-label="누적 결과">
+      <div class="tally-head">
+        <h2>누적 기록</h2>
+        <button class="reset-btn" id="resetBtn" type="button">초기화</button>
+      </div>
+      <div class="tally-list" id="tallyList"></div>
+    </aside>
+  </div>
+</div>
+
+<div class="modal-overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="ticketResult">
+  <div class="ticket">
+    <div class="ticket-eyebrow">오늘의 선택</div>
+    <div class="ticket-result" id="ticketResult"></div>
+    <p class="ticket-note" id="ticketNote"></p>
+    <button class="modal-close" id="closeBtn" type="button">확인</button>
+  </div>
+</div>
+
+<div class="visually-hidden" role="status" aria-live="polite" id="liveRegion"></div>
+
+<script>
+  (function () {
+    var MENU = [
+      { name: "김밥", color: "var(--seg-1)" },
+      { name: "떡볶이", color: "var(--seg-2)" },
+      { name: "피자", color: "var(--seg-3)" },
+      { name: "볶음밥", color: "var(--seg-4)" }
+    ];
+
+    var STORAGE_KEY = "dinner-roulette-counts-v1";
+    var canvas = document.getElementById("wheel");
+    var ctx = canvas.getContext("2d");
+    var spinBtn = document.getElementById("spinBtn");
+    var spinCountEl = document.getElementById("spinCount");
+    var tallyList = document.getElementById("tallyList");
+    var resetBtn = document.getElementById("resetBtn");
+    var overlay = document.getElementById("overlay");
+    var ticketResult = document.getElementById("ticketResult");
+    var ticketNote = document.getElementById("ticketNote");
+    var closeBtn = document.getElementById("closeBtn");
+    var liveRegion = document.getElementById("liveRegion");
+
+    var counts = loadCounts();
+    var currentRotation = 0;
+    var spinning = false;
+
+    function loadCounts() {
+      var base = {};
+      MENU.forEach(function (m) { base[m.name] = 0; });
+      try {
+        var raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          var parsed = JSON.parse(raw);
+          MENU.forEach(function (m) {
+            if (typeof parsed[m.name] === "number") base[m.name] = parsed[m.name];
+          });
+        }
+      } catch (e) {}
+      return base;
+    }
+
+    function saveCounts() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(counts));
+      } catch (e) {}
+    }
+
+    function resolvedHex(cssVar) {
+      var probe = document.createElement("span");
+      probe.style.color = cssVar;
+      document.body.appendChild(probe);
+      var rgb = getComputedStyle(probe).color;
+      document.body.removeChild(probe);
+      return rgb;
+    }
+
+    function drawWheel() {
+      var dpr = window.devicePixelRatio || 1;
+      var size = 640;
+      canvas.width = size * dpr;
+      canvas.height = size * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      var cx = size / 2;
+      var cy = size / 2;
+      var radius = size / 2 - 10;
+      var n = MENU.length;
+      var seg = (Math.PI * 2) / n;
+
+      ctx.clearRect(0, 0, size, size);
+
+      var ringColor = resolvedHex("var(--rim)");
+      var labelColor = "#fff8f0";
+
+      for (var i = 0; i < n; i++) {
+        var start = -Math.PI / 2 + i * seg;
+        var end = start + seg;
+        var mid = start + seg / 2;
+
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, radius, start, end);
+        ctx.closePath();
+        ctx.fillStyle = resolvedHex(MENU[i].color);
+        ctx.fill();
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        var flip = Math.cos(mid) < 0;
+        ctx.rotate(flip ? mid + Math.PI : mid);
+        ctx.fillStyle = labelColor;
+        ctx.font = "700 30px 'Pretendard Variable', -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif";
+        ctx.textBaseline = "middle";
+        ctx.textAlign = flip ? "left" : "right";
+        var textRadius = radius - 26;
+        ctx.fillText(MENU[i].name, flip ? -textRadius : textRadius, 0);
+        ctx.restore();
+      }
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = ringColor;
+      ctx.stroke();
+    }
+
+    function renderTally() {
+      var max = Math.max.apply(null, MENU.map(function (m) { return counts[m.name]; }).concat([1]));
+      var total = MENU.reduce(function (sum, m) { return sum + counts[m.name]; }, 0);
+
+      tallyList.innerHTML = "";
+      MENU.forEach(function (m) {
+        var row = document.createElement("div");
+        row.className = "tally-row";
+
+        var name = document.createElement("span");
+        name.className = "tally-name";
+        name.textContent = m.name;
+
+        var track = document.createElement("div");
+        track.className = "tally-bar-track";
+        var fill = document.createElement("div");
+        fill.className = "tally-bar-fill";
+        fill.style.background = m.color;
+        fill.style.width = (counts[m.name] / max) * 100 + "%";
+        track.appendChild(fill);
+
+        var count = document.createElement("span");
+        count.className = "tally-count";
+        count.textContent = counts[m.name];
+
+        row.appendChild(name);
+        row.appendChild(track);
+        row.appendChild(count);
+        tallyList.appendChild(row);
+      });
+
+      spinCountEl.textContent = total === 0
+        ? "아직 돌리지 않았어요"
+        : "총 " + total + "번 돌렸어요";
+    }
+
+    function pickIndex() {
+      return Math.floor(Math.random() * MENU.length);
+    }
+
+    function spin() {
+      if (spinning) return;
+      spinning = true;
+      spinBtn.disabled = true;
+
+      var idx = pickIndex();
+      var n = MENU.length;
+      var segDeg = 360 / n;
+      var centerDeg = idx * segDeg + segDeg / 2;
+      var margin = segDeg * 0.18;
+      var jitter = (Math.random() - 0.5) * (segDeg - margin * 2);
+      var desiredTopBased = ((centerDeg + jitter) % 360 + 360) % 360;
+
+      var targetMod = (360 - desiredTopBased) % 360;
+      var currentMod = ((currentRotation % 360) + 360) % 360;
+      var forwardDelta = (targetMod - currentMod + 360) % 360;
+      var extraSpins = 5;
+
+      currentRotation += extraSpins * 360 + forwardDelta;
+      canvas.style.transform = "rotate(" + currentRotation + "deg)";
+
+      var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var duration = reduceMotion ? 450 : 4200;
+
+      window.setTimeout(function () {
+        var chosen = MENU[idx];
+        counts[chosen.name] += 1;
+        saveCounts();
+        renderTally();
+        showResult(chosen);
+        spinning = false;
+        spinBtn.disabled = false;
+      }, duration + 60);
+    }
+
+    function showResult(chosen) {
+      ticketResult.textContent = chosen.name;
+      ticketNote.textContent = "지금까지 " + counts[chosen.name] + "번 선택됐어요.";
+      overlay.classList.add("open");
+      liveRegion.textContent = "오늘 저녁은 " + chosen.name + "입니다.";
+      closeBtn.focus();
+    }
+
+    function hideResult() {
+      overlay.classList.remove("open");
+      spinBtn.focus();
+    }
+
+    spinBtn.addEventListener("click", spin);
+    closeBtn.addEventListener("click", hideResult);
+    overlay.addEventListener("click", function (e) {
+      if (e.target === overlay) hideResult();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && overlay.classList.contains("open")) hideResult();
+    });
+
+    resetBtn.addEventListener("click", function () {
+      if (!window.confirm("누적된 기록을 모두 지울까요?")) return;
+      MENU.forEach(function (m) { counts[m.name] = 0; });
+      saveCounts();
+      renderTally();
+    });
+
+    drawWheel();
+    renderTally();
+  })();
+</script>
+</body>
+</html>
