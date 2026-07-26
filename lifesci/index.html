@@ -67,6 +67,16 @@
   .panel::after{ bottom:12px; right:12px; border-bottom:1.5px solid var(--neon-blue); border-right:1.5px solid var(--neon-blue);
     border-radius:0 0 6px 0; opacity:.75; color: var(--neon-blue); }
 
+  .audio-toggle{ position:absolute; top:14px; right:14px; z-index:5; width:38px; height:38px; border-radius:50%;
+    background: rgba(5,8,24,0.55); border:1px solid var(--line-blue); color: var(--neon-blue);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0;
+    box-shadow: 0 0 10px rgba(79,224,255,0.15) inset;
+    transition: box-shadow .25s ease, background .25s ease, color .25s ease, border-color .25s ease; }
+  .audio-toggle:hover{ background: rgba(79,224,255,0.14); box-shadow: 0 0 16px rgba(79,224,255,0.5); }
+  .audio-toggle:focus-visible{ outline: 2px solid var(--neon-green); outline-offset: 2px; }
+  .audio-toggle svg{ width:18px; height:18px; }
+  .audio-toggle.muted{ color: var(--text-lo); border-color: var(--line-green); }
+
   .eyebrow{ font-family: var(--font-display); font-style:italic; letter-spacing:.16em; font-size:.86rem;
     color: var(--neon-green); opacity:.9; margin: 0 0 14px; }
 
@@ -265,6 +275,13 @@
 <div id="particles"></div>
 <div class="stage">
   <div class="panel" id="panel">
+    <button class="audio-toggle" id="audioToggle" type="button" aria-pressed="false" aria-label="배경음악과 효과음 끄기">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 9v6h4l5 4V5L8 9H4Z" fill="currentColor" stroke="none"/>
+        <path d="M16.5 8.5a5 5 0 0 1 0 7"/>
+        <path d="M19 6a9 9 0 0 1 0 12"/>
+      </svg>
+    </button>
     <div id="app"></div>
   </div>
 </div>
@@ -308,7 +325,9 @@
     return new Promise(function(resolve){
       var i = 0;
       var id = setInterval(function(){
-        el.textContent += text.charAt(i);
+        var ch = text.charAt(i);
+        el.textContent += ch;
+        if (ch !== " " && i % 3 === 0) sfxType();
         i++;
         if (i >= text.length){ clearInterval(id); el._typeId = null; resolve(); }
       }, speed);
@@ -322,15 +341,41 @@
 
   /* ---------------- audio ---------------- */
   var audioCtx = null;
+  var sfxMasterGain = null, bgmMasterGain = null;
+  var masterMuted = false, bgmStarted = false, bgmBellTimer = null;
+
   function ensureAudio(){
     if (!audioCtx){
       var AC = window.AudioContext || window.webkitAudioContext;
       if (AC) audioCtx = new AC();
+      if (audioCtx){
+        sfxMasterGain = audioCtx.createGain();
+        sfxMasterGain.gain.value = masterMuted ? 0 : 1;
+        sfxMasterGain.connect(audioCtx.destination);
+        bgmMasterGain = audioCtx.createGain();
+        bgmMasterGain.gain.value = 0;
+        bgmMasterGain.connect(audioCtx.destination);
+      }
     }
     if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+    if (audioCtx && !bgmStarted){ bgmStarted = true; startBgm(); }
   }
-  function beep(freq, dur, type, delay, gain){
+
+  function setMasterVolume(muted){
     if (!audioCtx) return;
+    var t = audioCtx.currentTime;
+    if (sfxMasterGain){
+      sfxMasterGain.gain.cancelScheduledValues(t);
+      sfxMasterGain.gain.linearRampToValueAtTime(muted ? 0 : 1, t + 0.15);
+    }
+    if (bgmMasterGain){
+      bgmMasterGain.gain.cancelScheduledValues(t);
+      bgmMasterGain.gain.linearRampToValueAtTime(muted ? 0 : 0.16, t + 0.4);
+    }
+  }
+
+  function beep(freq, dur, type, delay, gain){
+    if (!audioCtx || !sfxMasterGain) return;
     var t0 = audioCtx.currentTime + (delay || 0);
     var osc = audioCtx.createOscillator();
     var g = audioCtx.createGain();
@@ -339,15 +384,22 @@
     g.gain.setValueAtTime(0, t0);
     g.gain.linearRampToValueAtTime(gain || 0.14, t0 + 0.012);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + (dur || 0.12));
-    osc.connect(g); g.connect(audioCtx.destination);
+    osc.connect(g); g.connect(sfxMasterGain);
     osc.start(t0); osc.stop(t0 + (dur || 0.12) + 0.03);
   }
   function sfxSelect(){ ensureAudio(); beep(660,.08,"sine",0,.1); beep(880,.1,"sine",.06,.1); }
   function sfxCorrect(){ ensureAudio(); beep(523,.1,"triangle",0,.14); beep(659,.1,"triangle",.09,.14); beep(784,.18,"triangle",.18,.14); }
   function sfxWrong(){ ensureAudio(); beep(220,.22,"sawtooth",0,.11); beep(160,.28,"sawtooth",.05,.09); }
+  function sfxHover(){ if (!audioCtx) return; beep(1180, 0.05, "sine", 0, 0.045); }
+  function sfxType(){ if (!audioCtx) return; beep(1500 + Math.random() * 260, 0.02, "square", 0, 0.02); }
+  function sfxFanfare(){
+    ensureAudio();
+    beep(523,.12,"triangle",0,.15); beep(659,.12,"triangle",.1,.15);
+    beep(784,.12,"triangle",.2,.15); beep(1047,.24,"triangle",.32,.16);
+  }
   function sfxScan(){
     ensureAudio();
-    if (!audioCtx) return;
+    if (!audioCtx || !sfxMasterGain) return;
     var t0 = audioCtx.currentTime;
     var osc = audioCtx.createOscillator();
     var g = audioCtx.createGain();
@@ -357,8 +409,70 @@
     g.gain.setValueAtTime(0.001, t0);
     g.gain.linearRampToValueAtTime(0.11, t0 + 0.05);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.85);
-    osc.connect(g); g.connect(audioCtx.destination);
+    osc.connect(g); g.connect(sfxMasterGain);
     osc.start(t0); osc.stop(t0 + 0.9);
+  }
+
+  /* ---------------- ambient BGM ---------------- */
+  function startBgm(){
+    if (!audioCtx || !bgmMasterGain) return;
+    var now = audioCtx.currentTime;
+
+    var drone = audioCtx.createOscillator();
+    drone.type = "sine"; drone.frequency.value = 55;
+    var droneGain = audioCtx.createGain(); droneGain.gain.value = 0.05;
+    drone.connect(droneGain); droneGain.connect(bgmMasterGain);
+    drone.start(now);
+
+    var filter = audioCtx.createBiquadFilter();
+    filter.type = "lowpass"; filter.frequency.value = 520; filter.Q.value = 0.7;
+    filter.connect(bgmMasterGain);
+
+    var lfo = audioCtx.createOscillator();
+    lfo.frequency.value = 0.045;
+    var lfoGain = audioCtx.createGain(); lfoGain.gain.value = 260;
+    lfo.connect(lfoGain); lfoGain.connect(filter.frequency);
+    lfo.start(now);
+
+    var chord = [110, 164.81, 261.63, 493.88];
+    var detunes = [-6, 5, -4, 7];
+    chord.forEach(function(freq, i){
+      var osc = audioCtx.createOscillator();
+      osc.type = i % 2 === 0 ? "sine" : "triangle";
+      osc.frequency.value = freq;
+      osc.detune.value = detunes[i];
+      var g = audioCtx.createGain(); g.gain.value = 0.032;
+      osc.connect(g); g.connect(filter);
+      osc.start(now);
+    });
+
+    var delay = audioCtx.createDelay(2.0); delay.delayTime.value = 0.38;
+    var feedback = audioCtx.createGain(); feedback.gain.value = 0.36;
+    var delayWet = audioCtx.createGain(); delayWet.gain.value = 0.5;
+    delay.connect(feedback); feedback.connect(delay);
+    delay.connect(delayWet); delayWet.connect(bgmMasterGain);
+
+    var bellScale = [220, 261.63, 293.66, 329.63, 392.0, 440.0];
+    function scheduleBell(){
+      if (!audioCtx) return;
+      var freq = bellScale[Math.floor(Math.random() * bellScale.length)];
+      var t = audioCtx.currentTime;
+      var osc = audioCtx.createOscillator();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      var g = audioCtx.createGain();
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.05, t + 0.06);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 2.6);
+      osc.connect(g); g.connect(bgmMasterGain); g.connect(delay);
+      osc.start(t); osc.stop(t + 2.7);
+      bgmBellTimer = setTimeout(scheduleBell, 3200 + Math.random() * 4200);
+    }
+    bgmBellTimer = setTimeout(scheduleBell, 1800);
+
+    bgmMasterGain.gain.cancelScheduledValues(now);
+    bgmMasterGain.gain.setValueAtTime(0, now);
+    bgmMasterGain.gain.linearRampToValueAtTime(masterMuted ? 0 : 0.16, now + 3.2);
   }
 
   /* ---------------- Dr. Bio character image ---------------- */
@@ -988,6 +1102,7 @@
       statusEl.hidden = true;
       frameEl.hidden = false;
       downloadBtn.disabled = false;
+      sfxFanfare();
       downloadBtn.addEventListener("click", function(){
         sfxSelect();
         var safeName = (state.name || "탐험가").replace(/[\\/:*?"<>|]/g, "").trim() || "탐험가";
@@ -1000,6 +1115,38 @@
       });
     });
   }
+
+  /* ---------------- global audio controls ---------------- */
+  var ICON_ON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M4 9v6h4l5 4V5L8 9H4Z" fill="currentColor" stroke="none"/>' +
+    '<path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a9 9 0 0 1 0 12"/></svg>';
+  var ICON_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M4 9v6h4l5 4V5L8 9H4Z" fill="currentColor" stroke="none"/>' +
+    '<path d="M16 9l5 6M21 9l-5 6"/></svg>';
+
+  var audioToggleBtn = document.getElementById("audioToggle");
+  audioToggleBtn.addEventListener("click", function(){
+    ensureAudio();
+    masterMuted = !masterMuted;
+    setMasterVolume(masterMuted);
+    audioToggleBtn.classList.toggle("muted", masterMuted);
+    audioToggleBtn.setAttribute("aria-pressed", String(masterMuted));
+    audioToggleBtn.setAttribute("aria-label", masterMuted ? "배경음악과 효과음 켜기" : "배경음악과 효과음 끄기");
+    audioToggleBtn.innerHTML = masterMuted ? ICON_OFF : ICON_ON;
+    if (!masterMuted) sfxSelect();
+  });
+
+  var hoverEl = null;
+  app.addEventListener("mouseover", function(e){
+    var el = e.target.closest && e.target.closest(".btn-neon, .ox-btn");
+    if (!el || el.disabled || el === hoverEl) return;
+    hoverEl = el;
+    sfxHover();
+  });
+  app.addEventListener("mouseout", function(e){
+    var el = e.target.closest && e.target.closest(".btn-neon, .ox-btn");
+    if (el && el === hoverEl && (!e.relatedTarget || !el.contains(e.relatedTarget))) hoverEl = null;
+  });
 
   renderPrologue();
 })();
