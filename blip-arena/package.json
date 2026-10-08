@@ -1,0 +1,17 @@
+{
+  "name": "blip-arena",
+  "version": "0.1.0",
+  "description": "2~6인 탑뷰 실시간 멀티플레이 슈팅 게임 (서버 권위 + 클라이언트 예측 + 보간)",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "lag": "node server/index.js --lag=100 --jitter=30"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1"
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "_안내": {
+    "설명": "캐릭터 수치 파일입니다. 값을 바꾼 뒤 서버 재시작 + 브라우저 새로고침하세요. (JSON은 주석을 못 써서 여기에 설명을 둡니다)",
+    "name / role / description": "로비에 표시되는 이름 / 역할 / 소개",
+    "maxHp": "최대 체력",
+    "speed": "이동 속도 (px/초)",
+    "radius": "몸통 반지름 = 충돌 판정 크기 (px)",
+    "attack.type": "spread = 부채꼴 산탄 / bullet = 단발 직사 / lob = 포물선 투척(벽을 넘어감, 범위 피해)",
+    "attack.damage": "한 발 데미지 (spread는 한 알, lob은 폭발 1회)",
+    "attack.range": "사거리 (px). lob 타입은 maxRange = 최대 투척 거리",
+    "attack.pellets / spreadDeg": "spread 전용: 산탄 개수 / 퍼지는 각도(도)",
+    "attack.bulletSpeed / bulletRadius": "탄속(px/초) / 총알 크기",
+    "attack.flightMs / blastRadius": "lob 전용: 날아가는 시간(ms) / 폭발 반경(px)",
+    "attack.maxAmmo / reloadMs": "탄약 칸 수 / 1칸 충전 시간(ms)",
+    "attack.fireCooldownMs": "연사 최소 간격(ms)",
+    "attack.superChargePerHit": "적을 1회 맞힐 때마다 차는 필살기 게이지 (1.0 = 가득)",
+    "super.type": "shockwave = 내 주변 충격파 + 넉백 / rail = 벽과 적을 관통하는 탄 / barrage = 폭탄 여러 개 동시 투척",
+    "새 캐릭터 추가": "characters에 항목을 복사해서 id와 수치만 바꾸면 됩니다. 공격/필살기 type은 위 목록 중에서 고르세요."
+  },
+  "characters": {
+    "tank": {
+      "name": "고르보",
+      "role": "탱커",
+      "description": "철판을 두른 덩치. 느리지만 단단하고, 가까이 붙으면 산탄총이 무섭다.",
+      "maxHp": 180,
+      "speed": 220,
+      "radius": 26,
+      "attack": {
+        "type": "spread",
+        "pellets": 5,
+        "spreadDeg": 40,
+        "damage": 14,
+        "range": 320,
+        "bulletSpeed": 850,
+        "bulletRadius": 5,
+        "maxAmmo": 3,
+        "reloadMs": 1100,
+        "fireCooldownMs": 350,
+        "superChargePerHit": 0.07
+      },
+      "super": {
+        "type": "shockwave",
+        "name": "대지 강타",
+        "description": "땅을 내리쳐 주변 적에게 피해를 주고 멀리 밀쳐낸다.",
+        "radius": 200,
+        "damage": 40,
+        "knockbackSpeed": 1100
+      }
+    },
+    "sniper": {
+      "name": "니아",
+      "role": "저격수",
+      "description": "외눈 렌즈의 명사수. 몸은 약하지만 멀리서 쏘는 한 발이 아프다.",
+      "maxHp": 70,
+      "speed": 270,
+      "radius": 18,
+      "attack": {
+        "type": "bullet",
+        "damage": 45,
+        "range": 1000,
+        "bulletSpeed": 1700,
+        "bulletRadius": 5,
+        "maxAmmo": 3,
+        "reloadMs": 1600,
+        "fireCooldownMs": 500,
+        "superChargePerHit": 0.34
+      },
+      "super": {
+        "type": "rail",
+        "name": "관통 레일",
+        "description": "벽과 적을 모두 꿰뚫는 초고속 탄환을 쏜다.",
+        "damage": 70,
+        "range": 1600,
+        "bulletSpeed": 2600,
+        "bulletRadius": 9
+      }
+    },
+    "thrower": {
+      "name": "토트",
+      "role": "투척수",
+      "description": "폭죽 장인. 벽 너머로 폭탄을 던져 숨어 있는 적을 몰아낸다.",
+      "maxHp": 90,
+      "speed": 260,
+      "radius": 20,
+      "attack": {
+        "type": "lob",
+        "damage": 30,
+        "maxRange": 520,
+        "flightMs": 700,
+        "blastRadius": 70,
+        "maxAmmo": 3,
+        "reloadMs": 1300,
+        "fireCooldownMs": 400,
+        "superChargePerHit": 0.25
+      },
+      "super": {
+        "type": "barrage",
+        "name": "불꽃 융단",
+        "description": "목표 지점 주변에 폭탄 5개를 한꺼번에 쏟아붓는다.",
+        "bombs": 5,
+        "spreadRadius": 70,
+        "damage": 20,
+        "blastRadius": 75,
+        "flightMs": 900,
+        "maxRange": 600
+      }
+    }
+  }
+}

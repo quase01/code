@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <!-- 모바일: 두 손가락 확대/더블탭 확대 막기 (조이스틱 조작 중 화면이 커지지 않게) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Blip Arena</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Phaser 캔버스가 들어갈 자리 -->
+  <div id="game"></div>
+
+  <!-- ===== 로비: 첫 화면 ===== -->
+  <section id="screen-home" class="screen">
+    <div class="panel">
+      <h1 class="logo">BLIP<span>ARENA</span></h1>
+      <p class="sub">친구들과 즐기는 탑뷰 난투</p>
+      <label class="field">닉네임
+        <input id="nickname" maxlength="12" placeholder="최대 12자" autocomplete="off">
+      </label>
+      <button id="btn-create" class="primary">방 만들기</button>
+      <div class="divider">또는</div>
+      <div class="row">
+        <input id="room-code" maxlength="4" inputmode="numeric" placeholder="방 코드 4자리" autocomplete="off">
+        <button id="btn-join">참가</button>
+      </div>
+      <p id="home-error" class="error"></p>
+    </div>
+  </section>
+
+  <!-- ===== 로비: 대기실 ===== -->
+  <section id="screen-room" class="screen" hidden>
+    <div class="panel">
+      <p class="sub">방 코드 (친구에게 알려주세요)</p>
+      <div id="room-code-display" class="code"></div>
+      <ul id="player-list"></ul>
+      <!-- 기지전일 때 player-list 대신 보이는 팀 나누기 -->
+      <div id="team-panel" hidden>
+        <div class="team-cols"><div class="team-col" data-team="0"></div><div class="team-col" data-team="1"></div></div>
+        <button id="btn-auto-teams" type="button">자동 나누기</button>
+      </div>
+      <p class="sub">캐릭터 선택</p>
+      <div id="char-list" class="char-list"></div>
+      <div id="char-detail" class="char-detail"></div>
+      <p class="sub">모드 <span id="mode-hint"></span></p>
+      <div id="mode-list" class="mode-list"></div>
+      <p class="sub">맵 <span id="map-hint"></span></p>
+      <div id="map-list" class="map-list"></div>
+      <p id="room-hint" class="hint"></p>
+      <button id="btn-start" class="primary">게임 시작</button>
+      <button id="btn-leave">나가기</button>
+      <p id="room-error" class="error"></p>
+    </div>
+  </section>
+
+  <!-- ===== 인게임 HUD (HTML로 캔버스 위에 겹침) ===== -->
+  <div id="hud" hidden>
+    <!-- 피격 시 화면 가장자리가 붉게 번쩍임 -->
+    <div id="hurt-overlay"></div>
+    <div id="hud-buttons">
+      <button id="btn-sound" type="button"></button>
+      <button id="btn-chat" class="touch-only" type="button">채팅</button>
+      <button id="btn-team-chat" class="touch-only" type="button" hidden>팀 채팅</button>
+    </div>
+    <div id="netinfo"></div>
+    <!-- 킬 연출 배너 -->
+    <div id="kill-banner" hidden><div class="kb-main"></div><div class="kb-sub"></div></div>
+    <div id="rotate-hint" class="touch-only">가로 화면을 권장합니다</div>
+    <div id="timer"></div>
+    <!-- 기지전: 양쪽 기지 체력 + 남은 시간 -->
+    <div id="team-bar" hidden>
+      <div class="tb-side ally"><span class="tb-label">우리 기지</span><div class="tb-track"><div class="tb-fill" id="tb-ally"></div></div></div>
+      <div id="tb-time"></div>
+      <div class="tb-side enemy"><span class="tb-label">적 기지</span><div class="tb-track"><div class="tb-fill" id="tb-enemy"></div></div></div>
+    </div>
+    <div id="scoreboard"></div>
+    <div id="respawn" hidden></div>
+    <div id="spectate" hidden></div>
+    <div id="gas-warning" hidden>독가스 안! 안전 구역으로 이동하세요</div>
+    <div id="killfeed"></div>
+    <div id="chat">
+      <div id="chat-log"></div>
+      <div id="chat-row">
+        <input id="chat-input" maxlength="100" placeholder="메시지 입력 후 Enter (Esc 취소)" autocomplete="off" enterkeyhint="send" hidden>
+        <button id="chat-send" class="touch-only" type="button" hidden>보내기</button>
+      </div>
+    </div>
+    <div id="mystatus">
+      <div id="my-char"></div>
+      <div id="super-bar"><div id="super-fill"></div><span id="super-label"></span></div>
+    </div>
+    <div id="controls-hint">WASD 이동 · 클릭 공격 · E/우클릭 필살기 · Enter 채팅 <span id="team-chat-hint" hidden>· T 팀 채팅</span> · F2 디버그</div>
+  </div>
+
+  <!-- ===== 모바일 터치 조작 (터치 기기에서만 보임) ===== -->
+  <div id="touch-controls" hidden>
+    <div class="tc-move-zone"></div>
+    <div class="tc-move-stick tc-stick" hidden><div class="tc-knob"></div></div>
+    <div class="tc-super tc-stick"><div class="tc-knob"></div><span class="tc-label">필살</span></div>
+    <div class="tc-attack tc-stick"><div class="tc-knob"></div><span class="tc-label">공격</span></div>
+  </div>
+
+  <!-- ===== 경기 결과 ===== -->
+  <section id="result" class="screen overlay" hidden>
+    <div class="panel">
+      <h2 id="result-title">경기 종료</h2>
+      <p id="result-sub" class="sub"></p>
+      <ol id="result-list"></ol>
+      <button id="btn-result-ok" class="primary">대기실로</button>
+    </div>
+  </section>
+
+  <!-- 라이브러리 -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+
+  <!-- 서버와 같은 코드를 쓰는 공용 모듈 -->
+  <script src="/shared/config.js"></script>
+  <script src="/shared/world.js"></script>
+  <script src="/shared/physics.js"></script>
+  <script src="/shared/lag.js"></script>
+
+  <!-- 클라이언트 -->
+  <script src="js/net.js"></script>
+  <script src="js/Sound.js"></script>
+  <script src="js/TouchControls.js"></script>
+  <script src="js/PlayerView.js"></script>
+  <script src="js/ProjectileView.js"></script>
+  <script src="js/HUD.js"></script>
+  <script src="js/GameScene.js"></script>
+  <script src="js/lobby.js"></script>
+</body>
+</html>
